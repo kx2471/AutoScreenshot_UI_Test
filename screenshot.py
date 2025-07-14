@@ -4,6 +4,9 @@ import time
 import re
 import base64
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from urllib.parse import urlparse
 from config import BREAKPOINTS
 
 def get_urls_from_file(file_path):
@@ -45,10 +48,22 @@ def capture_screenshots(driver, urls, base_path, browser_type):
     for url in urls:
         try:
             driver.get(url)
-            time.sleep(2)
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.TAG_NAME, "body"))
+            )
 
-            base_name = url.split('/')[-1] or "home"
-            page_title = re.sub(r'[?&=]', '_', base_name)
+            parsed_url = urlparse(url)
+            path_segments = [segment for segment in parsed_url.path.split('/') if segment]
+            
+            if path_segments:
+                base_name = path_segments[-1]
+            else:
+                base_name = "home"
+            
+            if parsed_url.query:
+                base_name += "_" + re.sub(r'[?&=]', '_', parsed_url.query)
+
+            page_title = re.sub(r'[^a-zA-Z0-9_.-]', '', base_name) # 파일명으로 부적합한 문자 제거
 
             for width, size_name in BREAKPOINTS.items():
                 driver.set_window_size(width, 1080)

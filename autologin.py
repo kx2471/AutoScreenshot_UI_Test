@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 from config import LOGIN_URL
+import datetime
 
 def login(driver, user_id, user_pw):
     """사용자로부터 입력받은 ID와 PW로 로그인을 시도합니다."""
@@ -25,17 +26,21 @@ def login(driver, user_id, user_pw):
         pw_field.send_keys(user_pw)
         pw_field.send_keys(Keys.RETURN)
 
-        time.sleep(3)
-        
-        if 'dashboard' in driver.current_url or '/' == driver.current_url[-1]:
-             print("로그인 시도 성공")
-             return True
-        else:
+        try:
+            # 로그인 성공 후 URL에 'dashboard'가 포함되거나 루트 URL로 돌아올 때까지 대기
+            WebDriverWait(driver, 10).until(
+                lambda d: 'dashboard' in d.current_url or d.current_url.endswith('/')
+            )
+            print("로그인 시도 성공")
+            return True
+        except Exception:
             print(f"로그인 실패. 현재 URL: {driver.current_url}")
-            driver.save_screenshot("login_failure.png")
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            driver.save_screenshot(f"login_failure_{timestamp}.png")
             return False
 
     except Exception as e:
         print(f"로그인 과정에서 오류 발생: {e}")
-        driver.save_screenshot("login_error.png")
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        driver.save_screenshot(f"login_error_{timestamp}.png")
         return False
