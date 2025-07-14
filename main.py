@@ -8,11 +8,9 @@ from webdriver_manager.microsoft import EdgeChromiumDriverManager
 import threading
 import os
 
-# 브라우저별 모듈 임포트
-from chrome_autologin import login as chrome_login
-from chrome_screenshot import get_urls_from_file, capture_screenshots as chrome_capture
-from edge_autologin import login as edge_login
-from edge_screenshot import capture_screenshots as edge_capture
+# 공용 모듈 임포트
+from autologin import login
+from screenshot import get_urls_from_file, capture_screenshots
 
 class App:
     def __init__(self, root):
@@ -83,10 +81,18 @@ class App:
                 self.update_status(f"{browser_type.capitalize()} 드라이버 생성 중...")
                 if browser_type == 'chrome':
                     options = webdriver.ChromeOptions()
+                    options.add_experimental_option("excludeSwitches", ["enable-logging"])
+                    options.add_argument("--start-maximized")
+                    options.add_argument("--disable-gpu")
+                    options.add_argument("--no-sandbox")
                     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
                     self.chrome_driver = driver
                 elif browser_type == 'edge':
                     options = webdriver.EdgeOptions()
+                    options.add_experimental_option("excludeSwitches", ["enable-logging"])
+                    options.add_argument("--start-maximized")
+                    options.add_argument("--disable-gpu")
+                    options.add_argument("--no-sandbox")
                     driver = webdriver.Edge(service=EdgeService(EdgeChromiumDriverManager().install()), options=options)
                     self.edge_driver = driver
                 self.update_status(f"{browser_type.capitalize()} 드라이버 생성 완료")
@@ -110,10 +116,9 @@ class App:
 
     def _login_thread(self, browser_type, uid, upw):
         self.update_status(f"{browser_type.capitalize()} 로그인 시도 중...")
-        login_func = globals()[f"{browser_type}_login"]
         driver = getattr(self, f"{browser_type}_driver")
         
-        if login_func(driver, uid, upw):
+        if login(driver, uid, upw):
             self.update_status(f"{browser_type.capitalize()} 로그인 성공")
             getattr(self, f"{browser_type}_shot_btn").config(state="normal")
         else:
@@ -133,11 +138,9 @@ class App:
 
     def _screenshot_thread(self, browser_type, urls):
         self.update_status(f"{browser_type.capitalize()} 스크린샷 캡처 중...")
-        capture_func = globals()[f"{browser_type}_capture"]
         driver = getattr(self, f"{browser_type}_driver")
         
-        # capture_screenshots 함수에 browser_type을 전달합니다.
-        capture_func(driver, urls, self.save_path.get(), browser_type)
+        capture_screenshots(driver, urls, self.save_path.get(), browser_type)
         
         self.update_status(f"{browser_type.capitalize()} 스크린샷 캡처 완료")
         messagebox.showinfo("완료", f"{browser_type.capitalize()} 스크린샷 캡처가 완료되었습니다.")

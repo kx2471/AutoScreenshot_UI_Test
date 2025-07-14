@@ -4,8 +4,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
-
-LOGIN_URL = "https://sn.devuser.sothis.co.kr/login"
+from config import LOGIN_URL
 
 def login(driver, user_id, user_pw):
     """사용자로부터 입력받은 ID와 PW로 로그인을 시도합니다."""

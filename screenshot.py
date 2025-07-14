@@ -1,15 +1,10 @@
+
 import os
 import time
 import re
 import base64
 from selenium.webdriver.common.by import By
-
-BREAKPOINTS = {
-    1400: "XL",
-    1100: "LG",
-    800: "MD",
-    400: "SM"
-}
+from config import BREAKPOINTS
 
 def get_urls_from_file(file_path):
     try:
@@ -59,7 +54,6 @@ def capture_screenshots(driver, urls, base_path, browser_type):
                 driver.set_window_size(width, 1080)
                 time.sleep(1)
 
-                # 폴더 이름에 브라우저 타입을 포함시킵니다.
                 directory = os.path.join(base_path, f"{browser_type}_{width} - {size_name}")
                 if not os.path.exists(directory):
                     os.makedirs(directory)
