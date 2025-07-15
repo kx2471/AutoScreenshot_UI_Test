@@ -45,21 +45,21 @@ python main.py
 
 Upon running the application, you will see the following UI:
 
-1.  **Login Information**:
+1.  **로그인 정보 **:
     *   **ID**: Enter the user ID for login.
     *   **Password**: Enter the user password for login.
 2.  **Login URL**:
     *   Enter the URL of the login page for the website to perform automatic login. A default value is provided.
-3.  **Breakpoint Settings**:
+3.  **Breakpoint 설정**:
     *   The currently set Breakpoint list is displayed.
-    *   Click the `Edit` button to modify the width for each Breakpoint (XL, LG, MD, SM).
+    *   Click the `편집` button to modify the width for each Breakpoint (XL, LG, MD, SM).
     *   Each Breakpoint's width can only be set within its specified valid range.
-4.  **Save Path**:
+4.  **저장 경로**:
     *   Displays the folder path where captured screenshots will be saved.
-    *   Click the `Select Folder` button to specify a different save path.
-5.  **URL File**:
+    *   Click the `폴더 선택` button to specify a different save path.
+5.  **URL 파일**:
     *   Displays the path to the `.txt` file containing the list of URLs for screenshot capture. The default is `url.txt`.
-    *   Click the `Select File` button to specify a different `.txt` file. Each line should contain one complete URL.
+    *   Click the `파일 선택` button to specify a different `.txt` file. Each line should contain one complete URL.
 6.  **Chrome / Edge**:
     *   **Login**: Attempts to log in using the respective browser.
     *   **Screenshot**: After successful login, iterates through the pages specified in the URL file, captures screenshots, and saves them to the designated save path.
