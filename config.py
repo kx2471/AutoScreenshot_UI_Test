@@ -1,16 +1,19 @@
 DEFAULT_LOGIN_URL = "https://sn.devuser.sothis.co.kr/login"
 
+LOGIN_ID_FIELD_ID = "id"
+LOGIN_PW_FIELD_ID = "pass"
+
 # Breakpoint 정의 (최소 너비 기준)
 DEFAULT_BREAKPOINTS = {
     "XL": 1280,
-    "LG": 1100, # 1024 ~ 1279
-    "MD": 800,  # 768 ~ 1023
-    "SM": 400   # 360 ~ 767
+    "LG": 1024, # 1024 ~ 1279
+    "MD": 768,  # 768 ~ 1023
+    "SM": 360   # 360 ~ 767
 }
 
 # Breakpoint 유효 범위
 BREAKPOINT_VALID_RANGES = {
-    "XL": (1280, 5000),
+    "XL": (1280, None),
     "LG": (1024, 1279),
     "MD": (768, 1023),
     "SM": (360, 767)
