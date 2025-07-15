@@ -1,15 +1,19 @@
+import datetime
+import logging
 
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import time
-import datetime
+from selenium.webdriver.support.ui import WebDriverWait
+
+# 로거 설정
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def login(driver, user_id, user_pw, login_url):
     """사용자로부터 입력받은 ID와 PW로 로그인을 시도합니다."""
     if not user_id or not user_pw:
-        print("ID와 PW를 모두 입력해야 합니다.")
+        logging.warning("ID와 PW를 모두 입력해야 합니다.")
         return False
 
     driver.get(login_url)
@@ -30,16 +34,21 @@ def login(driver, user_id, user_pw, login_url):
             WebDriverWait(driver, 10).until(
                 lambda d: 'dashboard' in d.current_url or d.current_url.endswith('/')
             )
-            print("로그인 시도 성공")
+            logging.info("로그인 시도 성공")
             return True
-        except Exception:
-            print(f"로그인 실패. 현재 URL: {driver.current_url}")
+        except TimeoutException:
+            logging.error(f"로그인 실패. 현재 URL: {driver.current_url}")
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             driver.save_screenshot(f"login_failure_{timestamp}.png")
             return False
 
+    except TimeoutException as e:
+        logging.error(f"로그인 과정에서 요소 탐색 시간 초과: {e}")
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        driver.save_screenshot(f"login_error_{timestamp}.png")
+        return False
     except Exception as e:
-        print(f"로그인 과정에서 오류 발생: {e}")
+        logging.error(f"로그인 과정에서 예상치 못한 오류 발생: {e}")
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         driver.save_screenshot(f"login_error_{timestamp}.png")
         return False
