@@ -1,91 +1,96 @@
-# Selenium UI 테스트 자동화 도구
+# Selenium UI Test Automation Tool
 
-## 🚀 프로젝트 소개
+## 🚀 Project Overview
 
-이 프로젝트는 Selenium을 활용하여 웹 애플리케이션의 UI를 자동으로 테스트하고, 다양한 화면 크기(Breakpoint)에서 스크린샷을 캡처하는 GUI 기반의 자동화 도구입니다. 사용자가 로그인 정보, 테스트할 URL 목록, 스크린샷 저장 경로, 그리고 Breakpoint 설정을 직접 지정할 수 있어 유연한 테스트 환경을 제공합니다.
+This project is a GUI-based automation tool that leverages Selenium to automatically test web application UIs and capture screenshots at various screen sizes (Breakpoints). It provides a flexible testing environment by allowing users to directly specify login information, a list of URLs to test, screenshot save paths, and Breakpoint settings.
 
-## ✨ 주요 기능
+## ✨ Key Features
 
-*   **자동 로그인**: 사용자 ID와 비밀번호를 입력하여 지정된 로그인 URL로 자동 로그인합니다.
-*   **다양한 Breakpoint 스크린샷 캡처**:
-    *   XL (1280px 이상)
+*   **Automatic Login**: Automatically logs in to a specified login URL using the user ID and password.
+*   **Screenshot Capture at Various Breakpoints**:
+    *   XL (1280px and above)
     *   LG (1024px ~ 1279px)
     *   MD (768px ~ 1023px)
     *   SM (360px ~ 767px)
-    *   사용자가 각 Breakpoint의 너비를 직접 설정할 수 있으며, 설정 시 유효 범위 검증이 이루어집니다.
-*   **URL 목록 기반 스크린샷**: `url.txt` 파일 또는 사용자가 지정한 다른 `.txt` 파일에 있는 URL들을 순회하며 스크린샷을 캡처합니다.
-*   **스크린샷 저장 경로 설정**: 캡처된 스크린샷이 저장될 폴더를 사용자가 직접 지정할 수 있습니다.
-*   **Chrome 및 Edge 브라우저 지원**: 두 가지 주요 브라우저에서 테스트를 수행할 수 있습니다.
-*   **GUI 기반**: Tkinter를 사용하여 직관적인 사용자 인터페이스를 제공합니다.
+    *   Users can directly set the width for each Breakpoint, and input validation ensures the width is within the valid range.
+*   **URL List-Based Screenshots**: Iterates through URLs listed in `url.txt` or another user-specified `.txt` file to capture screenshots.
+*   **Configurable Save Path**: Users can specify the folder where captured screenshots will be saved.
+*   **Chrome and Edge Browser Support**: Supports testing on both Chrome and Edge browsers.
+*   **GUI-Based**: Provides an intuitive user interface using Tkinter.
 
-## 🛠️ 설치 및 실행 방법
+## 🛠️ Installation and Execution
 
-### 1. Python 설치
+### 1. Python Installation
 
-Python 3.8 이상 버전이 설치되어 있어야 합니다.
-[Python 공식 웹사이트](https://www.python.org/downloads/)에서 다운로드하여 설치하세요.
+Python 3.8 or higher is required.
+Download and install from the [official Python website](https://www.python.org/downloads/).
 
-### 2. 의존성 설치
+### 2. Dependency Installation
 
-프로젝트 디렉토리로 이동하여 다음 명령어를 실행하여 필요한 라이브러리들을 설치합니다.
+Navigate to the project directory and run the following command to install the necessary libraries:
 
 ```bash
 pip install selenium webdriver-manager
 ```
 
-### 3. 애플리케이션 실행
+### 3. Application Execution
 
-설치가 완료되면 `main.py` 파일을 실행하여 GUI 애플리케이션을 시작합니다.
+Once installed, run the `main.py` file to start the GUI application:
 
 ```bash
 python main.py
 ```
 
-## 🖥️ 사용 방법
+## 🖥️ How to Use
 
-애플리케이션을 실행하면 다음과 같은 UI를 볼 수 있습니다.
+Upon running the application, you will see the following UI:
 
-1.  **로그인 정보**:
-    *   **아이디**: 로그인할 사용자 ID를 입력합니다.
-    *   **비밀번호**: 로그인할 사용자 비밀번호를 입력합니다.
-2.  **로그인 URL**:
-    *   자동 로그인을 수행할 웹사이트의 로그인 페이지 URL을 입력합니다. 기본값이 설정되어 있습니다.
-3.  **Breakpoint 설정**:
-    *   현재 설정된 Breakpoint 목록이 표시됩니다.
-    *   `편집` 버튼을 클릭하여 각 Breakpoint (XL, LG, MD, SM)의 너비를 수정할 수 있습니다.
-    *   각 Breakpoint는 지정된 유효 범위 내에서만 너비 설정이 가능합니다.
-4.  **저장 경로**:
-    *   캡처된 스크린샷이 저장될 폴더 경로를 표시합니다.
-    *   `폴더 선택` 버튼을 클릭하여 다른 저장 경로를 지정할 수 있습니다.
-5.  **URL 파일**:
-    *   스크린샷을 캡처할 URL 목록이 포함된 `.txt` 파일 경로를 표시합니다. 기본값은 `url.txt`입니다.
-    *   `파일 선택` 버튼을 클릭하여 다른 `.txt` 파일을 지정할 수 있습니다. 각 줄에 하나의 URL을 입력해야 합니다.
+1.  **Login Information**:
+    *   **ID**: Enter the user ID for login.
+    *   **Password**: Enter the user password for login.
+2.  **Login URL**:
+    *   Enter the URL of the login page for the website to perform automatic login. A default value is provided.
+3.  **Breakpoint Settings**:
+    *   The currently set Breakpoint list is displayed.
+    *   Click the `Edit` button to modify the width for each Breakpoint (XL, LG, MD, SM).
+    *   Each Breakpoint's width can only be set within its specified valid range.
+4.  **Save Path**:
+    *   Displays the folder path where captured screenshots will be saved.
+    *   Click the `Select Folder` button to specify a different save path.
+5.  **URL File**:
+    *   Displays the path to the `.txt` file containing the list of URLs for screenshot capture. The default is `url.txt`.
+    *   Click the `Select File` button to specify a different `.txt` file. Each line should contain one complete URL.
 6.  **Chrome / Edge**:
-    *   **로그인**: 해당 브라우저로 자동 로그인을 시도합니다.
-    *   **스크린샷**: 로그인 성공 후, URL 파일에 명시된 페이지들을 순회하며 스크린샷을 캡처하고 지정된 저장 경로에 저장합니다.
+    *   **Login**: Attempts to log in using the respective browser.
+    *   **Screenshot**: After successful login, iterates through the pages specified in the URL file, captures screenshots, and saves them to the designated save path.
 
-## ⚙️ 설정 파일
+## ⚙️ Configuration Files
 
-*   `config.py`: 기본 로그인 URL 및 기본 Breakpoint 설정, 그리고 각 Breakpoint의 유효 범위가 정의되어 있습니다.
-*   `url.txt`: 스크린샷을 캡처할 웹 페이지 URL 목록이 포함된 텍스트 파일입니다. 각 줄에 하나의 완전한 URL을 입력해야 합니다.
+*   `config.py`: Defines the default login URL, default Breakpoint settings, and valid ranges for each Breakpoint.
+*   `url.txt`: A text file containing a list of web page URLs for screenshot capture. Each line should contain one complete URL.
 
-## 📦 패키징 (선택 사항)
+## 📦 Packaging (Optional)
 
-PyInstaller를 사용하여 이 애플리케이션을 단일 실행 파일로 패키징할 수 있습니다.
+You can package this application into a single executable file using PyInstaller.
 
-1.  **PyInstaller 설치**:
+1.  **Install PyInstaller**:
     ```bash
 pip install pyinstaller
     ```
-2.  **애플리케이션 패키징**:
-    프로젝트 루트 디렉토리에서 다음 명령어를 실행합니다.
+2.  **Package the Application**:
+    From the project root directory, run the following command:
     ```bash
 pyinstaller --noconsole --onefile --add-data "config.py;." --add-data "autologin.py;." --add-data "screenshot.py;." --add-data "url.txt;." main.py
     ```
-    패키징이 완료되면 `dist` 폴더 안에 실행 파일이 생성됩니다.
+    Once packaged, the executable file will be generated in the `dist` folder.
 
-## 🤝 기여
+## ⬇️ Download Executable
 
-이 프로젝트는 사용자 편의성을 높이기 위해 지속적으로 개선될 수 있습니다. 기여를 환영합니다!
+You can download the latest packaged executable from the [GitHub Releases page](https://github.com/kx2471/AutoScreenshot_UI_Test/releases).
+*(Note: You will need to create a new release on your GitHub repository and upload the `main.exe` file from the `dist` folder to that release for the link to work.)*
+
+## 🤝 Contributing
+
+This project can be continuously improved to enhance user convenience. Contributions are welcome!
 
 ---
