@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from urllib.parse import urlparse
-from config import BREAKPOINTS
+from config import get_sorted_breakpoints
 
 def get_urls_from_file(file_path):
     try:
@@ -40,10 +40,13 @@ def capture_full_page_screenshot(driver, path):
         print(f"CDP 전체 페이지 스크린샷 캡처 중 오류 발생: {e}")
         driver.save_screenshot(path)
 
-def capture_screenshots(driver, urls, base_path, browser_type):
+def capture_screenshots(driver, urls, base_path, browser_type, breakpoints):
     if not urls:
         print("스크린샷을 캡처할 URL이 없습니다.")
         return
+
+    # Breakpoint를 너비 기준으로 정렬 (내림차순)
+    sorted_breakpoints = get_sorted_breakpoints(breakpoints)
 
     for url in urls:
         try:
@@ -65,7 +68,7 @@ def capture_screenshots(driver, urls, base_path, browser_type):
 
             page_title = re.sub(r'[^a-zA-Z0-9_.-]', '', base_name) # 파일명으로 부적합한 문자 제거
 
-            for width, size_name in BREAKPOINTS.items():
+            for width, size_name in sorted_breakpoints:
                 driver.set_window_size(width, 1080)
                 time.sleep(1)
 

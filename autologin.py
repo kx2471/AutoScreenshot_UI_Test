@@ -4,16 +4,15 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
-from config import LOGIN_URL
 import datetime
 
-def login(driver, user_id, user_pw):
+def login(driver, user_id, user_pw, login_url):
     """사용자로부터 입력받은 ID와 PW로 로그인을 시도합니다."""
     if not user_id or not user_pw:
         print("ID와 PW를 모두 입력해야 합니다.")
         return False
 
-    driver.get(LOGIN_URL)
+    driver.get(login_url)
     wait = WebDriverWait(driver, 10)
 
     try:
