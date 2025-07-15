@@ -1,10 +1,10 @@
 # Selenium UI Test Automation Tool
 
-## 🚀 Project Overview
+## Project Overview
 
 This project is a GUI-based automation tool that leverages Selenium to automatically test web application UIs and capture screenshots at various screen sizes (Breakpoints). It provides a flexible testing environment by allowing users to directly specify login information, a list of URLs to test, screenshot save paths, and Breakpoint settings.
 
-## ✨ Key Features
+## Key Features
 
 *   **Automatic Login**: Automatically logs in to a specified login URL using the user ID and password.
 *   **Screenshot Capture at Various Breakpoints**:
@@ -18,7 +18,7 @@ This project is a GUI-based automation tool that leverages Selenium to automatic
 *   **Chrome and Edge Browser Support**: Supports testing on both Chrome and Edge browsers.
 *   **GUI-Based**: Provides an intuitive user interface using Tkinter.
 
-## 🛠️ Installation and Execution
+## Installation and Execution
 
 ### 1. Python Installation
 
@@ -41,7 +41,7 @@ Once installed, run the `main.py` file to start the GUI application:
 python main.py
 ```
 
-## 🖥️ How to Use
+## How to Use
 
 Upon running the application, you will see the following UI:
 
@@ -64,33 +64,16 @@ Upon running the application, you will see the following UI:
     *   **Login**: Attempts to log in using the respective browser.
     *   **Screenshot**: After successful login, iterates through the pages specified in the URL file, captures screenshots, and saves them to the designated save path.
 
-## ⚙️ Configuration Files
+## Configuration Files
 
 *   `config.py`: Defines the default login URL, default Breakpoint settings, and valid ranges for each Breakpoint.
 *   `url.txt`: A text file containing a list of web page URLs for screenshot capture. Each line should contain one complete URL.
 
-## 📦 Packaging (Optional)
-
-You can package this application into a single executable file using PyInstaller.
-
-1.  **Install PyInstaller**:
-    ```bash
-pip install pyinstaller
-    ```
-2.  **Package the Application**:
-    From the project root directory, run the following command:
-    ```bash
-pyinstaller --noconsole --onefile --add-data "config.py;." --add-data "autologin.py;." --add-data "screenshot.py;." --add-data "url.txt;." main.py
-    ```
-    Once packaged, the executable file will be generated in the `dist` folder.
-
-## ⬇️ Download Executable
+## Download Executable
 
 You can download the latest packaged executable from the [GitHub Releases page](https://github.com/kx2471/AutoScreenshot_UI_Test/releases).
 *(Note: You will need to create a new release on your GitHub repository and upload the `main.exe` file from the `dist` folder to that release for the link to work.)*
 
-## 🤝 Contributing
+## Contributing
 
 This project can be continuously improved to enhance user convenience. Contributions are welcome!
-
----
