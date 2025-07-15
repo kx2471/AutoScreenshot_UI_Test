@@ -45,7 +45,7 @@ python main.py
 
 Upon running the application, you will see the following UI:
 
-1.  **로그인 정보 **:
+1.  **로그인 정보**:
     *   **ID**: Enter the user ID for login.
     *   **Password**: Enter the user password for login.
 2.  **Login URL**:
