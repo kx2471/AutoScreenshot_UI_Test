@@ -1,16 +1,19 @@
+import json
+import logging
+import os
+import threading
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox, simpledialog
+from tkinter import filedialog, messagebox, simpledialog, ttk
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.edge.service import Service as EdgeService
+from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
-import threading
-import os
 
 # 공용 모듈 임포트
 from autologin import login
-from screenshot import get_urls_from_file, capture_screenshots
+from screenshot import capture_screenshots, get_urls_from_file
 
 class App:
     def __init__(self, root):
@@ -30,7 +33,7 @@ class App:
         self.login_url = tk.StringVar(value=DEFAULT_LOGIN_URL)
         
         # Breakpoint 설정을 위한 StringVar. 딕셔너리를 문자열로 저장
-        self.breakpoints_config = tk.StringVar(value=str(DEFAULT_BREAKPOINTS)) 
+        self.breakpoints_config = tk.StringVar(value=json.dumps(DEFAULT_BREAKPOINTS)) 
 
         # --- GUI 구성 ---
         main_frame = ttk.Frame(self.root, padding="10")
@@ -113,8 +116,8 @@ class App:
 
         # 현재 설정된 Breakpoint 값을 가져와서 딕셔너리로 변환
         try:
-            current_breakpoints = eval(self.breakpoints_config.get())
-        except Exception:
+            current_breakpoints = json.loads(self.breakpoints_config.get())
+        except json.JSONDecodeError:
             current_breakpoints = {}
 
         # Breakpoint 항목들을 저장할 리스트
@@ -137,7 +140,7 @@ class App:
             range_text = ""
             if name in BREAKPOINT_VALID_RANGES:
                 min_w, max_w = BREAKPOINT_VALID_RANGES[name]
-                if max_w == 99999: # XL의 경우
+                if max_w is None: # XL의 경우
                     range_text = f"({min_w} 이상)"
                 else:
                     range_text = f"({min_w}~{max_w})"
@@ -165,7 +168,7 @@ class App:
                     messagebox.showwarning("입력 오류", f"'{name}' Breakpoint의 너비가 유효한 숫자가 아닙니다.")
                     return
             
-            self.breakpoints_config.set(str(new_breakpoints))
+            self.breakpoints_config.set(json.dumps(new_breakpoints))
             edit_window.destroy()
 
         ttk.Button(edit_window, text="저장", command=save_breakpoints).pack(pady=10)
@@ -195,9 +198,11 @@ class App:
                 return True
             except Exception as e:
                 messagebox.showerror("드라이버 오류", f"{browser_type.capitalize()} 드라이버 생성 실패: {e}")
-                print(f"드라이버 생성 오류: {e}") # 콘솔에 상세 오류 출력
+                logging.error(f"드라이버 생성 오류: {e}") # 콘솔에 상세 오류 출력
                 return False
-        return True
+        else:
+            logging.info(f"{browser_type.capitalize()} 드라이버가 이미 생성되어 있습니다.")
+            return True
 
     def run_login(self, browser_type):
         uid = self.user_id.get()
@@ -230,7 +235,7 @@ class App:
         else:
             self.update_status(f"{browser_type.capitalize()} 로그인 실패")
             messagebox.showerror("로그인 실패", f"{browser_type.capitalize()} 로그인에 실패했습니다.")
-            print(f"로그인 실패: {browser_type.capitalize()} 로그인 실패") # 콘솔에 상세 오류 출력
+            logging.error(f"로그인 실패: {browser_type.capitalize()} 로그인 실패") # 콘솔에 상세 오류 출력
         
         getattr(self, f"{browser_type}_login_btn").config(state="normal")
 
@@ -266,7 +271,7 @@ class App:
         except Exception as e:
             self.update_status(f"{browser_type.capitalize()} 스크린샷 캡처 중 오류 발생")
             messagebox.showerror("스크린샷 오류", f"{browser_type.capitalize()} 스크린샷 캡처 중 오류 발생: {e}")
-            print(f"스크린샷 캡처 오류: {e}") # 콘솔에 상세 오류 출력
+            logging.error(f"스크린샷 캡처 오류: {e}") # 콘솔에 상세 오류 출력
         finally:
             getattr(self, f"{browser_type}_shot_btn").config(state="normal")
 
@@ -281,6 +286,7 @@ class App:
         self.root.destroy()
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     root = tk.Tk()
     app = App(root)
     root.protocol("WM_DELETE_WINDOW", app.on_close)

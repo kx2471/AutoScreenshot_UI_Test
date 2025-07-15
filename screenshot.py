@@ -1,12 +1,15 @@
 
-import os
-import time
-import re
 import base64
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+import logging
+import os
+import re
+import time
 from urllib.parse import urlparse
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
 from config import get_sorted_breakpoints
 
 def get_urls_from_file(file_path):
@@ -15,7 +18,7 @@ def get_urls_from_file(file_path):
             urls = [line.strip() for line in f if line.strip()]
         return urls
     except FileNotFoundError:
-        print(f"오류: {file_path} 파일을 찾을 수 없습니다.")
+        logging.error(f"오류: {file_path} 파일을 찾을 수 없습니다.")
         return []
 
 def capture_full_page_screenshot(driver, path):
@@ -37,12 +40,12 @@ def capture_full_page_screenshot(driver, path):
         with open(path, "wb") as f:
             f.write(bytes_data)
     except Exception as e:
-        print(f"CDP 전체 페이지 스크린샷 캡처 중 오류 발생: {e}")
+        logging.error(f"CDP 전체 페이지 스크린샷 캡처 중 오류 발생: {e}")
         driver.save_screenshot(path)
 
 def capture_screenshots(driver, urls, base_path, browser_type, breakpoints):
     if not urls:
-        print("스크린샷을 캡처할 URL이 없습니다.")
+        logging.warning("스크린샷을 캡처할 URL이 없습니다.")
         return
 
     # Breakpoint를 너비 기준으로 정렬 (내림차순)
@@ -70,7 +73,10 @@ def capture_screenshots(driver, urls, base_path, browser_type, breakpoints):
 
             for width, size_name in sorted_breakpoints:
                 driver.set_window_size(width, 1080)
-                time.sleep(1)
+                # 페이지 로드가 완료될 때까지 대기
+                WebDriverWait(driver, 10).until(
+                    lambda d: d.execute_script("return document.readyState") == "complete"
+                )
 
                 directory = os.path.join(base_path, f"{browser_type}_{width} - {size_name}")
                 if not os.path.exists(directory):
@@ -78,6 +84,6 @@ def capture_screenshots(driver, urls, base_path, browser_type, breakpoints):
 
                 screenshot_path = os.path.join(directory, f"{page_title}.png")
                 capture_full_page_screenshot(driver, screenshot_path)
-                print(f"스크린샷 저장: {screenshot_path}")
+                logging.info(f"스크린샷 저장: {screenshot_path}")
         except Exception as e:
-            print(f"오류 발생: {url} 페이지 스크린샷 캡처 실패 - {e}")
+            logging.error(f"오류 발생: {url} 페이지 스크린샷 캡처 실패 - {e}")

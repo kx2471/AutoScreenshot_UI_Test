@@ -9,9 +9,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from config import LOGIN_ID_FIELD_ID, LOGIN_PW_FIELD_ID
 
-# 로거 설정
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
 def login(driver, user_id, user_pw, login_url):
     """사용자로부터 입력받은 ID와 PW로 로그인을 시도합니다."""
     if not user_id or not user_pw:
