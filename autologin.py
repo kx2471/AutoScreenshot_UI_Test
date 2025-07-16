@@ -42,7 +42,7 @@ def login(driver, user_id, user_pw, login_url):
             return False
 
     except TimeoutException as e:
-        logging.error(f"로그인 과정에서 요소 탐색 시간 초과: {e}")
+        logging.error(f"로그인 과정에서 요소 탐색 시간 초과: {str(e)}")
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         driver.save_screenshot(f"login_error_{timestamp}.png")
         return False

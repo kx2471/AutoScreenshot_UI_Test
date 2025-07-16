@@ -15,7 +15,7 @@ from config import get_sorted_breakpoints
 def get_urls_from_file(file_path):
     try:
         with open(file_path, 'r') as f:
-            urls = [line.strip() for line in f if line.strip()]
+            urls = [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
         return urls
     except FileNotFoundError:
         logging.error(f"오류: {file_path} 파일을 찾을 수 없습니다.")

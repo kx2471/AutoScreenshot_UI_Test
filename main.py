@@ -8,12 +8,11 @@ from tkinter import filedialog, messagebox, simpledialog, ttk
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.edge.service import Service as EdgeService
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
 # 공용 모듈 임포트
 from autologin import login
 from screenshot import capture_screenshots, get_urls_from_file
+from compare_screenshots import run_comparison
 
 class App:
     def __init__(self, root):
@@ -92,6 +91,12 @@ class App:
         self.edge_login_btn.pack(pady=10, fill="x", padx=10)
         self.edge_shot_btn = ttk.Button(edge_frame, text="Edge 스크린샷", command=lambda: self.run_screenshot('edge'), state="disabled")
         self.edge_shot_btn.pack(pady=10, fill="x", padx=10)
+
+        # 비교 실행 프레임
+        compare_frame = ttk.LabelFrame(main_frame, text="비교 실행")
+        compare_frame.pack(fill="x", pady=5)
+        self.compare_btn = ttk.Button(compare_frame, text="스크린샷 비교 실행", command=self.run_comparison_thread)
+        self.compare_btn.pack(pady=10, fill="x", padx=10)
 
         # 상태바
         self.status_label = ttk.Label(self.root, text="준비 완료", relief="sunken", anchor="w")
@@ -184,15 +189,22 @@ class App:
                     options.add_argument("--start-maximized")
                     options.add_argument("--disable-gpu")
                     options.add_argument("--no-sandbox")
-                    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+                    # Selenium Manager가 Chrome 드라이버를 자동으로 관리합니다.
+                    driver = webdriver.Chrome(options=options)
                     self.chrome_driver = driver
                 elif browser_type == 'edge':
+                    edge_driver_path = os.path.join(os.getcwd(), "msedgedriver.exe")
+                    if not os.path.exists(edge_driver_path):
+                        messagebox.showerror("드라이버 오류", f"Edge 드라이버를 찾을 수 없습니다.\n경로: {edge_driver_path}")
+                        return False
+
+                    service = EdgeService(executable_path=edge_driver_path)
                     options = webdriver.EdgeOptions()
                     options.add_experimental_option("excludeSwitches", ["enable-logging"])
                     options.add_argument("--start-maximized")
                     options.add_argument("--disable-gpu")
                     options.add_argument("--no-sandbox")
-                    driver = webdriver.Edge(service=EdgeService(EdgeChromiumDriverManager().install()), options=options)
+                    driver = webdriver.Edge(service=service, options=options)
                     self.edge_driver = driver
                 self.update_status(f"{browser_type.capitalize()} 드라이버 생성 완료")
                 return True
@@ -274,6 +286,27 @@ class App:
             logging.error(f"스크린샷 캡처 오류: {e}") # 콘솔에 상세 오류 출력
         finally:
             getattr(self, f"{browser_type}_shot_btn").config(state="normal")
+
+    def run_comparison_thread(self):
+        self.update_status("스크린샷 비교 시작...")
+        self.compare_btn.config(state="disabled")
+        threading.Thread(target=self._run_comparison).start()
+
+    def _run_comparison(self):
+        base_path = self.save_path.get()
+        try:
+            diff_count, output_path = run_comparison(base_path)
+            self.update_status(f"비교 완료. 총 {diff_count}개의 차이점 발견.")
+            if diff_count > 0:
+                messagebox.showinfo("비교 완료", f"총 {diff_count}개의 차이점을 발견했습니다.\n결과가 저장된 폴더: {output_path}")
+            else:
+                messagebox.showinfo("비교 완료", "차이점을 발견하지 못했습니다.")
+        except Exception as e:
+            self.update_status("비교 중 오류 발생")
+            messagebox.showerror("비교 오류", f"스크린샷 비교 중 오류 발생: {e}")
+            logging.error(f"스크린샷 비교 오류: {e}")
+        finally:
+            self.compare_btn.config(state="normal")
 
     def update_status(self, text):
         self.status_label.config(text=text)
