@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import platform  # OS 감지를 위해 추가
 import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
@@ -22,6 +23,7 @@ class App:
 
         self.chrome_driver = None
         self.edge_driver = None
+        self.safari_driver = None # Safari 드라이버 속성 추가
         self.user_id = tk.StringVar()
         self.user_pw = tk.StringVar()
         self.save_path = tk.StringVar(value=os.getcwd())
@@ -70,27 +72,29 @@ class App:
         ttk.Entry(url_file_frame, textvariable=self.url_file_path, state="readonly").pack(side="left", fill="x", expand=True, padx=5, pady=5)
         ttk.Button(url_file_frame, text="파일 선택", command=self.select_url_file).pack(side="right", padx=5)
 
-        # 실행 프레임
+        # 실행 프레임 (동적으로 브라우저 버튼 생성)
         run_frame = ttk.Frame(main_frame)
         run_frame.pack(fill="both", expand=True, pady=10)
-        run_frame.columnconfigure(0, weight=1)
-        run_frame.columnconfigure(1, weight=1)
+        
+        # 지원할 브라우저 목록 설정
+        browsers = ['chrome', 'edge']
+        if platform.system() == 'Darwin': # macOS일 경우 Safari 추가
+            browsers.append('safari')
 
-        # Chrome 실행 영역
-        chrome_frame = ttk.LabelFrame(run_frame, text="Chrome")
-        chrome_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
-        self.chrome_login_btn = ttk.Button(chrome_frame, text="Chrome 로그인", command=lambda: self.run_login('chrome'))
-        self.chrome_login_btn.pack(pady=10, fill="x", padx=10)
-        self.chrome_shot_btn = ttk.Button(chrome_frame, text="Chrome 스크린샷", command=lambda: self.run_screenshot('chrome'), state="disabled")
-        self.chrome_shot_btn.pack(pady=10, fill="x", padx=10)
+        # 각 브라우저에 대한 버튼 동적 생성
+        for i, browser_name in enumerate(browsers):
+            run_frame.columnconfigure(i, weight=1)
+            
+            browser_frame = ttk.LabelFrame(run_frame, text=browser_name.capitalize())
+            browser_frame.grid(row=0, column=i, padx=5, pady=5, sticky="nsew")
 
-        # Edge 실행 영역
-        edge_frame = ttk.LabelFrame(run_frame, text="Edge")
-        edge_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
-        self.edge_login_btn = ttk.Button(edge_frame, text="Edge 로그인", command=lambda: self.run_login('edge'))
-        self.edge_login_btn.pack(pady=10, fill="x", padx=10)
-        self.edge_shot_btn = ttk.Button(edge_frame, text="Edge 스크린샷", command=lambda: self.run_screenshot('edge'), state="disabled")
-        self.edge_shot_btn.pack(pady=10, fill="x", padx=10)
+            login_btn = ttk.Button(browser_frame, text=f"{browser_name.capitalize()} 로그인", command=lambda b=browser_name: self.run_login(b))
+            login_btn.pack(pady=10, fill="x", padx=10)
+            setattr(self, f"{browser_name}_login_btn", login_btn)
+
+            shot_btn = ttk.Button(browser_frame, text=f"{browser_name.capitalize()} 스크린샷", command=lambda b=browser_name: self.run_screenshot(b), state="disabled")
+            shot_btn.pack(pady=10, fill="x", padx=10)
+            setattr(self, f"{browser_name}_shot_btn", shot_btn)
 
         # 비교 실행 프레임
         compare_frame = ttk.LabelFrame(main_frame, text="비교 실행")
@@ -112,7 +116,9 @@ class App:
         if file_path:
             self.url_file_path.set(file_path)
 
-    def edit_breakpoints(self):
+    def edit_breakpoints(
+        self
+    ):
         # Breakpoint 편집을 위한 새 Toplevel 윈도우 생성
         edit_window = tk.Toplevel(self.root)
         edit_window.title("Breakpoint 편집")
@@ -166,7 +172,7 @@ class App:
                     if name in BREAKPOINT_VALID_RANGES:
                         min_width, max_width = BREAKPOINT_VALID_RANGES[name]
                         if not (min_width <= width <= max_width):
-                            messagebox.showwarning("입력 오류", f"'{name}' Breakpoint의 너비({width})가 유효 범위({min_width}~{max_width}) 밖에 있습니다.")
+                            messagebox.showwarning("입력 오류", f"'{name}' Breakpoint의 너비({width})가 유효 범위({min_width}~{max_w}) 밖에 있습니다.")
                             return
                     new_breakpoints[name] = width
                 else:
@@ -179,7 +185,7 @@ class App:
         ttk.Button(edit_window, text="저장", command=save_breakpoints).pack(pady=10)
 
     def create_driver(self, browser_type):
-        driver_instance = getattr(self, f"{browser_type}_driver")
+        driver_instance = getattr(self, f"{browser_type}_driver", None)
         if not driver_instance:
             try:
                 self.update_status(f"{browser_type.capitalize()} 드라이버 생성 중...")
@@ -189,15 +195,17 @@ class App:
                     options.add_argument("--start-maximized")
                     options.add_argument("--disable-gpu")
                     options.add_argument("--no-sandbox")
-                    # Selenium Manager가 Chrome 드라이버를 자동으로 관리합니다.
                     driver = webdriver.Chrome(options=options)
                     self.chrome_driver = driver
                 elif browser_type == 'edge':
+                    # Edge는 Windows에서만 실행 가능하다고 가정
+                    if platform.system() != 'Windows':
+                        messagebox.showerror("OS 오류", "Edge는 Windows에서만 사용할 수 있습니다.")
+                        return False
                     edge_driver_path = os.path.join(os.getcwd(), "msedgedriver.exe")
                     if not os.path.exists(edge_driver_path):
                         messagebox.showerror("드라이버 오류", f"Edge 드라이버를 찾을 수 없습니다.\n경로: {edge_driver_path}")
                         return False
-
                     service = EdgeService(executable_path=edge_driver_path)
                     options = webdriver.EdgeOptions()
                     options.add_experimental_option("excludeSwitches", ["enable-logging"])
@@ -206,11 +214,19 @@ class App:
                     options.add_argument("--no-sandbox")
                     driver = webdriver.Edge(service=service, options=options)
                     self.edge_driver = driver
+                elif browser_type == 'safari':
+                    # Safari는 macOS에서만 실행 가능
+                    if platform.system() != 'Darwin':
+                        messagebox.showerror("OS 오류", "Safari는 macOS에서만 사용할 수 있습니다.")
+                        return False
+                    driver = webdriver.Safari()
+                    self.safari_driver = driver
+                
                 self.update_status(f"{browser_type.capitalize()} 드라이버 생성 완료")
                 return True
             except Exception as e:
                 messagebox.showerror("드라이버 오류", f"{browser_type.capitalize()} 드라이버 생성 실패: {e}")
-                logging.error(f"드라이버 생성 오류: {e}") # 콘솔에 상세 오류 출력
+                logging.error(f"드라이버 생성 오류: {e}")
                 return False
         else:
             logging.info(f"{browser_type.capitalize()} 드라이버가 이미 생성되어 있습니다.")
@@ -219,7 +235,7 @@ class App:
     def run_login(self, browser_type):
         uid = self.user_id.get()
         upw = self.user_pw.get()
-        login_url = self.login_url.get() # 추가: 사용자가 설정한 로그인 URL 가져오기
+        login_url = self.login_url.get()
         
         if not uid or not upw:
             messagebox.showwarning("입력 오류", "아이디와 비밀번호를 모두 입력해주세요.")
@@ -232,22 +248,19 @@ class App:
         if not self.create_driver(browser_type): return
 
         getattr(self, f"{browser_type}_login_btn").config(state="disabled")
-        # 수정: 로그인 URL을 _login_thread로 전달
         threading.Thread(target=self._login_thread, args=(browser_type, uid, upw, login_url)).start() 
 
-    # 수정: login_url 파라미터 추가
     def _login_thread(self, browser_type, uid, upw, login_url): 
         self.update_status(f"{browser_type.capitalize()} 로그인 시도 중...")
         driver = getattr(self, f"{browser_type}_driver")
         
-        # 수정: login 함수에 login_url 전달
         if login(driver, uid, upw, login_url): 
             self.update_status(f"{browser_type.capitalize()} 로그인 성공")
             getattr(self, f"{browser_type}_shot_btn").config(state="normal")
         else:
             self.update_status(f"{browser_type.capitalize()} 로그인 실패")
             messagebox.showerror("로그인 실패", f"{browser_type.capitalize()} 로그인에 실패했습니다.")
-            logging.error(f"로그인 실패: {browser_type.capitalize()} 로그인 실패") # 콘솔에 상세 오류 출력
+            logging.error(f"로그인 실패: {browser_type.capitalize()} 로그인 실패")
         
         getattr(self, f"{browser_type}_login_btn").config(state="normal")
 
@@ -257,9 +270,8 @@ class App:
             messagebox.showwarning("URL 없음", "URL 파일을 찾을 수 없거나 내용이 비어 있습니다.")
             return
         
-        # Breakpoint 설정 가져오기
         try:
-            breakpoints = eval(self.breakpoints_config.get())
+            breakpoints = json.loads(self.breakpoints_config.get())
             if not isinstance(breakpoints, dict):
                 raise ValueError("Breakpoint 설정이 올바른 딕셔너리 형식이 아닙니다.")
         except Exception as e:
@@ -267,23 +279,20 @@ class App:
             return
 
         getattr(self, f"{browser_type}_shot_btn").config(state="disabled")
-        # 수정: breakpoints를 _screenshot_thread로 전달
         threading.Thread(target=self._screenshot_thread, args=(browser_type, urls, breakpoints)).start() 
 
-    # 수정: breakpoints 파라미터 추가
     def _screenshot_thread(self, browser_type, urls, breakpoints): 
         self.update_status(f"{browser_type.capitalize()} 스크린샷 캡처 중...")
         driver = getattr(self, f"{browser_type}_driver")
         
         try:
-            # 수정: capture_screenshots 함수에 breakpoints 전달
             capture_screenshots(driver, urls, self.save_path.get(), browser_type, breakpoints) 
             self.update_status(f"{browser_type.capitalize()} 스크린샷 캡처 완료")
             messagebox.showinfo("완료", f"{browser_type.capitalize()} 스크린샷 캡처가 완료되었습니다.")
         except Exception as e:
             self.update_status(f"{browser_type.capitalize()} 스크린샷 캡처 중 오류 발생")
             messagebox.showerror("스크린샷 오류", f"{browser_type.capitalize()} 스크린샷 캡처 중 오류 발생: {e}")
-            logging.error(f"스크린샷 캡처 오류: {e}") # 콘솔에 상세 오류 출력
+            logging.error(f"스크린샷 캡처 오류: {e}")
         finally:
             getattr(self, f"{browser_type}_shot_btn").config(state="normal")
 
@@ -316,6 +325,8 @@ class App:
             self.chrome_driver.quit()
         if self.edge_driver:
             self.edge_driver.quit()
+        if self.safari_driver: # Safari 드라이버 종료 추가
+            self.safari_driver.quit()
         self.root.destroy()
 
 if __name__ == "__main__":

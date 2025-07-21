@@ -207,6 +207,10 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-# Ignore all .txt files except url.txt
+# Ignore all .txt files except specified ones
 *.txt
 !url.txt
+!macOS_guide.txt
+
+# Visual Studio Code
+.vscode/
