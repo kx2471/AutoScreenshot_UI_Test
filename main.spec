@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('msedgedriver.exe', '.'), ('url.txt', '.')],
+    datas=[('msedgedriver.exe', '.'), ('url.txt', 'data')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

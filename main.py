@@ -5,7 +5,8 @@ import platform  # OS 감지를 위해 추가
 import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
-import urllib.parse # 추가
+import urllib.parse
+import sys # 추가
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -29,7 +30,16 @@ class App:
         self.user_id = tk.StringVar()
         self.user_pw = tk.StringVar()
         self.save_path = tk.StringVar(value=os.getcwd())
-        self.url_file_path = tk.StringVar(value="url.txt") # url.txt 기본값 설정
+        
+        # url.txt 경로를 실행 파일 기준으로 설정
+        if getattr(sys, 'frozen', False):
+            # PyInstaller로 빌드된 경우, 데이터 파일은 sys._MEIPASS에 위치
+            application_path = sys._MEIPASS
+        else:
+            # 일반 Python 스크립트로 실행되는 경우
+            application_path = os.path.dirname(os.path.abspath(__file__))
+        self.url_file_path = tk.StringVar(value=os.path.join(application_path, "data", "url.txt"))
+        logging.info(f"초기 url.txt 경로 설정: {self.url_file_path.get()}") # 추가된 로그
         
         # config.py에서 기본값 로드
         from config import DEFAULT_LOGIN_URL, DEFAULT_BREAKPOINTS
@@ -49,7 +59,7 @@ class App:
         ttk.Entry(login_frame, textvariable=self.user_id).grid(row=0, column=1, padx=5, pady=5, sticky="ew")
         ttk.Label(login_frame, text="비밀번호:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
         ttk.Entry(login_frame, textvariable=self.user_pw, show="*").grid(row=1, column=1, padx=5, pady=5, sticky="ew")
-        login_frame.columnconfigure(1, weight=1)
+        login_frame.columnconfigure(1, weight=1);
 
         # 스크린샷 페이지 기본 URL 설정 프레임 (이전 로그인 URL 프레임)
         login_url_frame = ttk.LabelFrame(main_frame, text="스크린샷 페이지 기본 URL")
@@ -114,7 +124,21 @@ class App:
             self.save_path.set(path)
 
     def select_url_file(self):
-        file_path = filedialog.askopenfilename(initialdir=os.path.dirname(self.url_file_path.get()), filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
+        # 현재 url_file_path가 기본값인 경우 application_path를 initialdir로 사용
+        if getattr(sys, 'frozen', False):
+            application_path = sys._MEIPASS # PyInstaller 빌드 시 _MEIPASS 사용
+        else:
+            application_path = os.path.dirname(os.path.abspath(__file__))
+
+        current_url_file_val = self.url_file_path.get()
+        default_url_file_path = os.path.join(application_path, "url.txt")
+
+        if current_url_file_val == default_url_file_path:
+            initial_dir = application_path
+        else:
+            initial_dir = os.path.dirname(current_url_file_val)
+
+        file_path = filedialog.askopenfilename(initialdir=initial_dir, filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
         if file_path:
             self.url_file_path.set(file_path)
 
