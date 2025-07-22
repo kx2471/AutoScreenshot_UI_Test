@@ -1,4 +1,3 @@
-
 import base64
 import logging
 import os
@@ -6,6 +5,7 @@ import re
 import time
 from urllib.parse import urlparse
 
+from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -41,7 +41,10 @@ def capture_full_page_screenshot(driver, path):
             f.write(bytes_data)
     except Exception as e:
         logging.error(f"CDP 전체 페이지 스크린샷 캡처 중 오류 발생: {e}")
-        driver.save_screenshot(path)
+        try:
+            driver.save_screenshot(path)
+        except WebDriverException:
+            logging.warning("드라이버가 이미 종료되어 스크린샷을 저장할 수 없습니다.")
 
 def capture_screenshots(driver, urls, base_path, browser_type, breakpoints):
     if not urls:
@@ -85,5 +88,13 @@ def capture_screenshots(driver, urls, base_path, browser_type, breakpoints):
                 screenshot_path = os.path.join(directory, f"{page_title}.png")
                 capture_full_page_screenshot(driver, screenshot_path)
                 logging.info(f"스크린샷 저장: {screenshot_path}")
+        except WebDriverException as e:
+            logging.error(f"WebDriver 오류 발생: {url} 페이지 스크린샷 캡처 실패 - {e}")
+            if driver:
+                try:
+                    driver.quit()
+                except WebDriverException:
+                    logging.warning("드라이버 종료 중 오류 발생 (이미 종료되었을 수 있음).")
+            return # 현재 URL 스크린샷 실패 시 다음 URL로 넘어가지 않고 함수 종료
         except Exception as e:
             logging.error(f"오류 발생: {url} 페이지 스크린샷 캡처 실패 - {e}")

@@ -1,7 +1,7 @@
 import datetime
 import logging
 
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -15,10 +15,10 @@ def login(driver, user_id, user_pw, login_url):
         logging.warning("ID와 PW를 모두 입력해야 합니다.")
         return False
 
-    driver.get(login_url)
-    wait = WebDriverWait(driver, 10)
-
     try:
+        driver.get(login_url)
+        wait = WebDriverWait(driver, 10)
+
         id_field = wait.until(EC.presence_of_element_located((By.ID, LOGIN_ID_FIELD_ID)))
         pw_field = wait.until(EC.presence_of_element_located((By.ID, LOGIN_PW_FIELD_ID)))
 
@@ -41,13 +41,25 @@ def login(driver, user_id, user_pw, login_url):
             driver.save_screenshot(f"login_failure_{timestamp}.png")
             return False
 
-    except TimeoutException as e:
-        logging.error(f"로그인 과정에서 요소 탐색 시간 초과: {str(e)}")
+    except (TimeoutException, WebDriverException) as e:
+        logging.error(f"로그인 과정에서 오류 발생: {str(e)}")
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        driver.save_screenshot(f"login_error_{timestamp}.png")
+        try:
+            driver.save_screenshot(f"login_error_{timestamp}.png")
+        except WebDriverException:
+            logging.warning("드라이버가 이미 종료되어 스크린샷을 저장할 수 없습니다.")
+        finally:
+            if isinstance(e, WebDriverException) and driver:
+                try:
+                    driver.quit()
+                except WebDriverException:
+                    logging.warning("드라이버 종료 중 오류 발생 (이미 종료되었을 수 있음).")
         return False
     except Exception as e:
         logging.error(f"로그인 과정에서 예상치 못한 오류 발생: {e}")
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        driver.save_screenshot(f"login_error_{timestamp}.png")
+        try:
+            driver.save_screenshot(f"login_error_{timestamp}.png")
+        except WebDriverException:
+            logging.warning("드라이버가 이미 종료되어 스크린샷을 저장할 수 없습니다.")
         return False

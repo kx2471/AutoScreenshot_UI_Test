@@ -1,4 +1,4 @@
-DEFAULT_LOGIN_URL = "https://sn.devuser.sothis.co.kr/login"
+DEFAULT_LOGIN_URL = "https://sn.devuser.sothis.co.kr/"
 
 LOGIN_ID_FIELD_ID = "id"
 LOGIN_PW_FIELD_ID = "pass"

@@ -5,10 +5,12 @@ import platform  # OS 감지를 위해 추가
 import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
+import urllib.parse # 추가
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.edge.service import Service as EdgeService
+from selenium.common.exceptions import WebDriverException # WebDriverException 임포트
 
 # 공용 모듈 임포트
 from autologin import login
@@ -49,8 +51,8 @@ class App:
         ttk.Entry(login_frame, textvariable=self.user_pw, show="*").grid(row=1, column=1, padx=5, pady=5, sticky="ew")
         login_frame.columnconfigure(1, weight=1)
 
-        # 로그인 URL 설정 프레임
-        login_url_frame = ttk.LabelFrame(main_frame, text="로그인 URL")
+        # 스크린샷 페이지 기본 URL 설정 프레임 (이전 로그인 URL 프레임)
+        login_url_frame = ttk.LabelFrame(main_frame, text="스크린샷 페이지 기본 URL")
         login_url_frame.pack(fill="x", pady=5)
         ttk.Entry(login_url_frame, textvariable=self.login_url).pack(side="left", fill="x", expand=True, padx=5, pady=5)
 
@@ -67,7 +69,7 @@ class App:
         ttk.Button(path_frame, text="폴더 선택", command=self.select_save_path).pack(side="right", padx=5)
 
         # URL 파일 경로 프레임
-        url_file_frame = ttk.LabelFrame(main_frame, text="URL 파일")
+        url_file_frame = ttk.LabelFrame(main_frame, text="URL 파일 (경로 목록)")
         url_file_frame.pack(fill="x", pady=5)
         ttk.Entry(url_file_frame, textvariable=self.url_file_path, state="readonly").pack(side="left", fill="x", expand=True, padx=5, pady=5)
         ttk.Button(url_file_frame, text="파일 선택", command=self.select_url_file).pack(side="right", padx=5)
@@ -171,8 +173,8 @@ class App:
                     # 유효성 검사 추가
                     if name in BREAKPOINT_VALID_RANGES:
                         min_width, max_width = BREAKPOINT_VALID_RANGES[name]
-                        if not (min_width <= width <= max_width):
-                            messagebox.showwarning("입력 오류", f"'{name}' Breakpoint의 너비({width})가 유효 범위({min_width}~{max_w}) 밖에 있습니다.")
+                        if not (min_width <= width <= (max_width or float('inf'))):
+                            messagebox.showwarning("입력 오류", f"'{name}' Breakpoint의 너비({width})가 유효 범위({min_w}~{max_w}) 밖에 있습니다.")
                             return
                     new_breakpoints[name] = width
                 else:
@@ -235,34 +237,46 @@ class App:
     def run_login(self, browser_type):
         uid = self.user_id.get()
         upw = self.user_pw.get()
-        login_url = self.login_url.get()
+        # 변경된 로직: 스크린샷 페이지 기본 URL에 /login을 붙여 로그인 URL 생성
+        base_screenshot_url = self.login_url.get().rstrip('/')
+        if not base_screenshot_url:
+            messagebox.showwarning("입력 오류", "스크린샷 페이지 기본 URL을 입력해주세요.")
+            return
+        login_url = urllib.parse.urljoin(base_screenshot_url, 'login') # urljoin 사용
         
         if not uid or not upw:
             messagebox.showwarning("입력 오류", "아이디와 비밀번호를 모두 입력해주세요.")
             return
         
-        if not login_url:
-            messagebox.showwarning("입력 오류", "로그인 URL을 입력해주세요.")
-            return
-
         if not self.create_driver(browser_type): return
 
         getattr(self, f"{browser_type}_login_btn").config(state="disabled")
         threading.Thread(target=self._login_thread, args=(browser_type, uid, upw, login_url)).start() 
 
-    def _login_thread(self, browser_type, uid, upw, login_url): 
-        self.update_status(f"{browser_type.capitalize()} 로그인 시도 중...")
+    def _login_thread(self, browser_type, uid, upw, login_url):
         driver = getattr(self, f"{browser_type}_driver")
-        
-        if login(driver, uid, upw, login_url): 
-            self.update_status(f"{browser_type.capitalize()} 로그인 성공")
-            getattr(self, f"{browser_type}_shot_btn").config(state="normal")
-        else:
-            self.update_status(f"{browser_type.capitalize()} 로그인 실패")
-            messagebox.showerror("로그인 실패", f"{browser_type.capitalize()} 로그인에 실패했습니다.")
-            logging.error(f"로그인 실패: {browser_type.capitalize()} 로그인 실패")
-        
-        getattr(self, f"{browser_type}_login_btn").config(state="normal")
+        try:
+            self.update_status(f"{browser_type.capitalize()} 로그인 시도 중...")
+            
+            if login(driver, uid, upw, login_url):
+                self.update_status(f"{browser_type.capitalize()} 로그인 성공")
+                getattr(self, f"{browser_type}_shot_btn").config(state="normal")
+            else:
+                self.update_status(f"{browser_type.capitalize()} 로그인 실패")
+                messagebox.showerror("로그인 실패", f"{browser_type.capitalize()} 로그인에 실패했습니다.")
+                logging.error(f"로그인 실패: {browser_type.capitalize()} 로그인 실패")
+                # 드라이버가 닫혔을 수 있으므로, 드라이버 참조를 제거하여 새로 생성하도록 함
+                setattr(self, f"{browser_type}_driver", None)
+                getattr(self, f"{browser_type}_shot_btn").config(state="disabled")
+        except WebDriverException as e:
+            self.update_status(f"{browser_type.capitalize()} 드라이버 오류 발생")
+            messagebox.showerror("드라이버 오류", f"{browser_type.capitalize()} 드라이버 오류 발생: {e}")
+            logging.error(f"드라이버 오류: {e}")
+            setattr(self, f"{browser_type}_driver", None) # 드라이버 참조 초기화
+            getattr(self, f"{browser_type}_shot_btn").config(state="disabled")
+        finally:
+            # 어떤 경우에도 로그인 버튼은 다시 활성화
+            getattr(self, f"{browser_type}_login_btn").config(state="normal")
 
     def run_screenshot(self, browser_type):
         urls = get_urls_from_file(self.url_file_path.get())
@@ -281,14 +295,28 @@ class App:
         getattr(self, f"{browser_type}_shot_btn").config(state="disabled")
         threading.Thread(target=self._screenshot_thread, args=(browser_type, urls, breakpoints)).start() 
 
-    def _screenshot_thread(self, browser_type, urls, breakpoints): 
+    def _screenshot_thread(self, browser_type, urls, breakpoints):
         self.update_status(f"{browser_type.capitalize()} 스크린샷 캡처 중...")
         driver = getattr(self, f"{browser_type}_driver")
         
         try:
-            capture_screenshots(driver, urls, self.save_path.get(), browser_type, breakpoints) 
+            # 1, 2번 요청: 로그인 URL과 url.txt의 경로를 조합
+            base_url = self.login_url.get().rstrip('/')
+            if not base_url:
+                messagebox.showerror("URL 오류", "로그인 URL이 비어있습니다. 스크린샷을 진행할 수 없습니다.")
+                self.update_status("오류: 로그인 URL 필요")
+                return
+
+            full_urls = [urllib.parse.urljoin(base_url, path) for path in urls] # urljoin 사용
+
+            capture_screenshots(driver, full_urls, self.save_path.get(), browser_type, breakpoints)
             self.update_status(f"{browser_type.capitalize()} 스크린샷 캡처 완료")
             messagebox.showinfo("완료", f"{browser_type.capitalize()} 스크린샷 캡처가 완료되었습니다.")
+        except WebDriverException as e:
+            self.update_status(f"{browser_type.capitalize()} 드라이버 오류 발생")
+            messagebox.showerror("드라이버 오류", f"{browser_type.capitalize()} 드라이버 오류 발생: {e}")
+            logging.error(f"드라이버 오류: {e}")
+            setattr(self, f"{browser_type}_driver", None) # 드라이버 참조 초기화
         except Exception as e:
             self.update_status(f"{browser_type.capitalize()} 스크린샷 캡처 중 오류 발생")
             messagebox.showerror("스크린샷 오류", f"{browser_type.capitalize()} 스크린샷 캡처 중 오류 발생: {e}")
