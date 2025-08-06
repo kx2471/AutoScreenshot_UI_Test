@@ -17,6 +17,7 @@ from selenium.common.exceptions import WebDriverException # WebDriverException �
 from autologin import login
 from screenshot import capture_screenshots, get_urls_from_file
 from compare_screenshots import run_comparison
+from apply_grid import process_screenshots
 
 class App:
     def __init__(self, root):
@@ -107,6 +108,12 @@ class App:
             shot_btn = ttk.Button(browser_frame, text=f"{browser_name.capitalize()} 스크린샷", command=lambda b=browser_name: self.run_screenshot(b), state="disabled")
             shot_btn.pack(pady=10, fill="x", padx=10)
             setattr(self, f"{browser_name}_shot_btn", shot_btn)
+
+        # 그리드 적용 프레임
+        grid_frame = ttk.LabelFrame(main_frame, text="그리드 적용")
+        grid_frame.pack(fill="x", pady=5)
+        self.grid_btn = ttk.Button(grid_frame, text="스크린샷에 그리드 적용", command=self.run_apply_grid_thread)
+        self.grid_btn.pack(pady=10, fill="x", padx=10)
 
         # 비교 실행 프레임
         compare_frame = ttk.LabelFrame(main_frame, text="비교 실행")
@@ -218,7 +225,7 @@ class App:
                 if browser_type == 'chrome':
                     options = webdriver.ChromeOptions()
                     options.add_experimental_option("excludeSwitches", ["enable-logging"])
-                    options.add_argument("--start-maximized")
+                    
                     options.add_argument("--disable-gpu")
                     options.add_argument("--no-sandbox")
                     driver = webdriver.Chrome(options=options)
@@ -235,7 +242,7 @@ class App:
                     service = EdgeService(executable_path=edge_driver_path)
                     options = webdriver.EdgeOptions()
                     options.add_experimental_option("excludeSwitches", ["enable-logging"])
-                    options.add_argument("--start-maximized")
+                    
                     options.add_argument("--disable-gpu")
                     options.add_argument("--no-sandbox")
                     driver = webdriver.Edge(service=service, options=options)
@@ -352,6 +359,33 @@ class App:
         self.update_status("스크린샷 비교 시작...")
         self.compare_btn.config(state="disabled")
         threading.Thread(target=self._run_comparison).start()
+
+    def run_apply_grid_thread(self):
+        self.update_status("그리드 적용 시작...")
+        self.grid_btn.config(state="disabled")
+        threading.Thread(target=self._run_apply_grid).start()
+
+    def _run_apply_grid(self):
+        base_path = self.save_path.get()
+        source_dir = os.path.join(base_path, 'screenshots')
+        output_dir = os.path.join(base_path, 'screenshots_with_grid')
+        
+        if not os.path.isdir(source_dir):
+            messagebox.showerror("폴더 없음", f"스크린샷 폴더를 찾을 수 없습니다: {source_dir}")
+            self.update_status("오류: 스크린샷 폴더 없음")
+            self.grid_btn.config(state="normal")
+            return
+
+        try:
+            process_screenshots(source_dir, output_dir)
+            self.update_status(f"그리드 적용 완료. 결과 폴더: {output_dir}")
+            messagebox.showinfo("완료", f"그리드 적용이 완료되었습니다.\n결과가 저장된 폴더: {output_dir}")
+        except Exception as e:
+            self.update_status("그리드 적용 중 오류 발생")
+            messagebox.showerror("그리드 적용 오류", f"그리드 적용 중 오류 발생: {e}")
+            logging.error(f"그리드 적용 오류: {e}")
+        finally:
+            self.grid_btn.config(state="normal")
 
     def _run_comparison(self):
         base_path = self.save_path.get()

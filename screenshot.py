@@ -53,6 +53,9 @@ def capture_screenshots(driver, urls, base_path, browser_type, breakpoints):
 
     # Breakpoint를 너비 기준으로 정렬 (내림차순)
     sorted_breakpoints = get_sorted_breakpoints(breakpoints)
+    
+    # 비동기 스크립트 타임아웃 설정 (5초)
+    driver.set_script_timeout(5)
 
     for url in urls:
         try:
@@ -75,10 +78,15 @@ def capture_screenshots(driver, urls, base_path, browser_type, breakpoints):
             page_title = re.sub(r'[^a-zA-Z0-9_.-]', '', base_name) # 파일명으로 부적합한 문자 제거
 
             for width, size_name in sorted_breakpoints:
-                driver.set_window_size(width, 1080)
-                # 페이지 로드가 완료될 때까지 대기
-                WebDriverWait(driver, 10).until(
-                    lambda d: d.execute_script("return document.readyState") == "complete"
+                # 24px 오프셋을 더하여 창 크기 설정
+                driver.set_window_size(width + 24, 1080)
+
+                # requestAnimationFrame을 사용하여 렌더링이 완료될 때까지 대기
+                driver.execute_async_script(
+                    "const callback = arguments[arguments.length - 1];"
+                    "window.requestAnimationFrame(() => {"
+                    "  window.requestAnimationFrame(callback);"
+                    "});"
                 )
 
                 directory = os.path.join(base_path, f"{browser_type}_{width} - {size_name}")
